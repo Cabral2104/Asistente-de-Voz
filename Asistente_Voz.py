@@ -7,6 +7,7 @@
 import speech_recognition as sr
 import webbrowser
 import pyttsx3
+import difflib
 
 recognizer = sr.Recognizer()
 engine = pyttsx3.init()
@@ -28,30 +29,33 @@ def talk():
         return ""
 
 def search_store(store_name, url):
-    engine.say(f'Qué quieres buscar en {store_name}')
+    engine.say(f'Qué quieres buscar en {store_name}?')
     engine.runAndWait()
     query = talk()
-
+    
     if query:
-        webbrowser.open(f'{url}{query}')
+        webbrowser.open(url.format(query=query))
 
+#Lista de tiendas disponibles
+stores = {
+    "amazon": "https://www.amazon.es/s?k={query}",
+    "mercado libre": "https://www.mercadolibre.com.mx/jm/search?as_word={query}",
+    "ebay": "https://www.ebay.com/sch/i.html?_nkw={query}",
+    "aliexpress": "https://www.aliexpress.com/wholesale?SearchText={query}",
+    "walmart": "https://www.walmart.com.mx/search?q={query}",
+    "temu": "https://www.temu.com/search?q={query}"
+}
+
+#Capturar el texto hablado
 text = talk()
 
-if 'amazon' in text:
-    search_store('Amazon', 'https://www.amazon.es/s?k=')
+#Buscar coincidencias con las tiendas disponibles
+match = difflib.get_close_matches(text, stores.keys(), n=1, cutoff=0.6)
 
-elif 'mercadolibre' in text:
-    search_store('Mercado Libre', 'https://www.mercadolibre.com.mx/jm/search?as_word=')
-
-elif 'ebay' in text:
-    search_store('eBay', 'https://www.ebay.com/sch/i.html?_nkw=')
-
-elif 'aliexpress' in text:
-    search_store('AliExpress', 'https://www.aliexpress.com/wholesale?SearchText=')
-
-elif 'walmart' in text:
-    search_store('Walmart', 'https://www.walmart.com.mx/search?q=')
-
+if match:
+    store_name = match[0]
+    search_store(store_name, stores[store_name])
 else:
-    engine.say("No conozco aún esa tienda, Lo siento:(")
+    print(f"No se reconoció la tienda: {text}")
+    engine.say("No reconocí la tienda, intenta de nuevo.")
     engine.runAndWait()
